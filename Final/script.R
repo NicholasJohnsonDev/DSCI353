@@ -50,7 +50,7 @@ View(dog_adoptable)
 # TODO: update field inUS to snake_case in_us
 # TODO: filter to just true for in_us
 # TODO: drop field in_us as all records have same value
-# TODO: convert state to abbreviated name to match dog_descriptions format
+
 
 # dog_descriptions
 dog_descriptions <- read_csv("data/raw/dog_descriptions.csv") 
@@ -70,19 +70,20 @@ table(dog_descriptions$contact_country)
 # TODO:  drop type field contact_country as all are in the US, some have state or zip here by error
 table(dog_descriptions$posted)
 # TODO: handle city and state names in datetime field. do we need this at all? 
-# TODO:  Shows us how long they have been in for. Perhaps derive days_available from accessed - posted
+# TODO:  Shows us how long they have been in for. Perhaps derive days_available from accessed - posted. dogs there longer are less desireable
 table(dog_descriptions$accessed)
 # TODO:  drop type field accessed as all are 20/9/2019 or NA
+# TODO: convert state abbreviated name to full state name (need to find a key-value)
 
-# Question: should we convert description to description_length ?
-# Question: drop contact_state and contact_zip ? Are we doing anything lower than the state level?
+# Question: should we convert description to description_length or just drop it?
+# Question: drop contact_city and contact_zip ? Are we doing anything lower than the state level?
 
-# TODO: outliers and errors
 
 # dog_destination
 dog_destination <- read_csv("data/raw/dog_destination.csv") 
 View(dog_descriptions)
-# TODO: convert state to abbreviated name to match dog_descriptions format
+
+# TODO: outliers and errors for all three tables
 
 
 # 3.4 Once your data is clean, show what the final data set looks like. 
