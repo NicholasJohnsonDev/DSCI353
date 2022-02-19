@@ -20,6 +20,8 @@
 install.packages("tidyverse")
 install.packages("readr")
 install.packages("here") 
+install.packages("zipcodeR")
+install.packages("usa")
 
 # 2.2 Messages and warnings resulting from loading the package are suppressed.
 ## quietly = T will suppress warning and messages
@@ -28,10 +30,11 @@ install.packages("here")
 library(tidyverse, quietly = T) # TODO: here initially, break out into needed later and add descriptions why you have each
 library(readr, quietly = T) # import csv in a more feature rich way
 library(here, quietly = T) # The here package creates paths relative to the top-level directory, better for sharing code for collaboration
+library(dplyr) # for data/dataframe
+library(usa) # to translate zip to state
 
 here::i_am("Final.Rproj")
 here() # set current directory to top-level of project 
-
 
 # 3 Data Preparation ------------------------------------------------------
 # 3.1 Original source where the data was obtained is cited
@@ -44,30 +47,44 @@ here() # set current directory to top-level of project
 # 3.3 Data importing and cleaning steps are explained in the text 
 #     (tell me why you are doing the data cleaning activities that you perform) and follow a logical process.
 
-# dog_adoptable
+
+
+# load dog_adoptable
 dog_adoptable <- read_csv("data/raw/dog_adoptable.csv")
-View(dog_adoptable)
-# TODO: update field inUS to snake_case in_us
-# TODO: filter to just true for in_us
-# TODO: drop field in_us as all records have same value
+# update field inUS to snake_case in_us
+dog_adoptable <- rename(dog_adoptable, in_us = inUS)
+# filter to just true for in_us
+dog_adoptable <- filter(dog_adoptable, in_us == TRUE)
+# drop field in_us as all records have same value
+dog_adoptable <- select(dog_adoptable, !in_us)
+# replace all NA with 0
+dog_adoptable <- mutate_all(dog_adoptable, ~replace(., is.na(.), 0))
+# save as processed
+write.csv(dog_descriptions,"data/processed/dog_adoptable.csv", row.names = TRUE)
 
 
 # dog_descriptions
 dog_descriptions <- read_csv("data/raw/dog_descriptions.csv") 
+View(dog_descriptions)
 #TODO: One or more parsing issues, see `problems()` for details
 # problem may be from some having commas in values like with id 41330726
-View(dog_descriptions)
-# TODO:  update field stateQ to snake_case state_q
-table(dog_descriptions$species)
-# TODO:  drop type field as all are dogs so adds no value.
-table(dog_descriptions$type)
-# TODO:  drop type field as all are dogs so adds no value. 3 are NA but confirmed they are dogs with their description
-table(dog_descriptions$photo)
-# drop as all are NA
-table(dog_descriptions$declawed)
-# TODO:  drop as all are NA
-table(dog_descriptions$contact_country)
-# TODO:  drop type field contact_country as all are in the US, some have state or zip here by error
+
+# drop stateQ as is only "The state abbreviation queried in the API to return this result " 
+dog_descriptions <- select(dog_descriptions, !stateQ)
+# drop status field as all are dogs adoptable
+dog_descriptions <- select(dog_descriptions, !status)
+# drop species field as all are dogs so adds no value.
+dog_descriptions <- select(dog_descriptions, !species)
+# drop type field as all are dogs so adds no value.3 are NA but confirmed they are dogs with their description
+dog_descriptions <- select(dog_descriptions, !type)
+# drop photo as all are NA
+dog_descriptions <- select(dog_descriptions, !photo)
+# drop declawed as all are NA
+dog_descriptions <- select(dog_descriptions, !declawed)
+# drop contact_country as all are in the US, some have state or zip here by error
+dog_descriptions <- filter(dog_descriptions, contact_country == "US")
+dog_descriptions <- select(dog_descriptions, !contact_country)
+
 table(dog_descriptions$posted)
 # TODO: handle city and state names in datetime field. do we need this at all? 
 # TODO:  Shows us how long they have been in for. Perhaps derive days_available from accessed - posted. dogs there longer are less desireable
@@ -75,15 +92,44 @@ table(dog_descriptions$accessed)
 # TODO:  drop type field accessed as all are 20/9/2019 or NA
 # TODO: convert state abbreviated name to full state name (need to find a key-value)
 
+
 # Question: should we convert description to description_length or just drop it?
+dog_descriptions <- select(dog_descriptions, !description)
+
 # Question: drop contact_city and contact_zip ? Are we doing anything lower than the state level?
+
+
+# fix zip na, all are in boston 02108
+dog_descriptions <- mutate_at(dog_descriptions, vars("contact_zip"), ~replace(., is.na(.), 02108))
+# TODO: why is this not padding zip with 0s?
+dog_descriptions <- mutate(dog_descriptions,
+          zip = str_pad(string = contact_zip,
+                              width = 5,
+                              side = "left",
+                              pad = "0"))
+#rename to city state and zip
+dog_descriptions <- select(dog_descriptions, !contact_zip)
+dog_descriptions <- rename(dog_descriptions, city = contact_city)
+dog_descriptions <- rename(dog_descriptions, state = contact_state)
+
+# state abbreviation to full names
+state.abb.and.name <- tibble(state.abb, state.name)
+# TODO: what's wrong with this join
+dog_descriptions <- left_join(dog_descriptions, state.abb.and.name, by = c("state", "state.abb"))
+# TODO: once joined, drop state and rename state.name to state
+
+# save as processed
+write.csv(dog_descriptions,"data/processed/dog_descriptions.csv", row.names = TRUE)
 
 
 # dog_destination
 dog_destination <- read_csv("data/raw/dog_destination.csv") 
-View(dog_descriptions)
+# save as processed
+write.csv(dog_descriptions,"data/processed/dog_destination.csv", row.names = TRUE)
 
-# TODO: outliers and errors for all three tables
+
+# TODO: outliers, errors, and NAs for all three tables
+
 
 
 # 3.4 Once your data is clean, show what the final data set looks like. 
