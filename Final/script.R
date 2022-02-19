@@ -20,8 +20,7 @@
 install.packages("tidyverse")
 install.packages("readr")
 install.packages("here") 
-install.packages("zipcodeR")
-install.packages("usa")
+install.packages(dplyr)
 
 # 2.2 Messages and warnings resulting from loading the package are suppressed.
 ## quietly = T will suppress warning and messages
@@ -30,8 +29,7 @@ install.packages("usa")
 library(tidyverse, quietly = T) # TODO: here initially, break out into needed later and add descriptions why you have each
 library(readr, quietly = T) # import csv in a more feature rich way
 library(here, quietly = T) # The here package creates paths relative to the top-level directory, better for sharing code for collaboration
-library(dplyr) # for data/dataframe
-library(usa) # to translate zip to state
+library(dplyr) # for data/dataframe manipulation
 
 here::i_am("Final.Rproj")
 here() # set current directory to top-level of project 
@@ -60,12 +58,11 @@ dog_adoptable <- select(dog_adoptable, !in_us)
 # replace all NA with 0
 dog_adoptable <- mutate_all(dog_adoptable, ~replace(., is.na(.), 0))
 # save as processed
-write.csv(dog_descriptions,"data/processed/dog_adoptable.csv", row.names = TRUE)
+write.csv(dog_descriptions,"data/processed/dog_adoptable.csv", row.names = FALSE)
 
 
 # dog_descriptions
 dog_descriptions <- read_csv("data/raw/dog_descriptions.csv") 
-View(dog_descriptions)
 #TODO: One or more parsing issues, see `problems()` for details
 # problem may be from some having commas in values like with id 41330726
 
@@ -85,12 +82,14 @@ dog_descriptions <- select(dog_descriptions, !declawed)
 dog_descriptions <- filter(dog_descriptions, contact_country == "US")
 dog_descriptions <- select(dog_descriptions, !contact_country)
 
-table(dog_descriptions$posted)
 # TODO: handle city and state names in datetime field. do we need this at all? 
 # TODO:  Shows us how long they have been in for. Perhaps derive days_available from accessed - posted. dogs there longer are less desireable
-table(dog_descriptions$accessed)
-# TODO:  drop type field accessed as all are 20/9/2019 or NA
-# TODO: convert state abbreviated name to full state name (need to find a key-value)
+dog_descriptions <- mutate(dog_descriptions, posted_date = as.Date(posted))
+dog_descriptions <- mutate(dog_descriptions, accessed_date = as.Date(accessed, "%d/%m/%Y"))
+dog_descriptions <- mutate(dog_descriptions, days_in_shelter = 
+                             as.numeric(difftime(dog_descriptions$accessed_date, 
+                                                 dog_descriptions$posted_date , units = c("days"))))
+dog_descriptions <- select(dog_descriptions, !c(posted, posted_date, accessed, accessed_date))
 
 
 # Question: should we convert description to description_length or just drop it?
@@ -99,7 +98,7 @@ dog_descriptions <- select(dog_descriptions, !description)
 # Question: drop contact_city and contact_zip ? Are we doing anything lower than the state level?
 
 
-# fix zip na, all are in boston 02108
+# fix zip na, all are in Boston 02108
 dog_descriptions <- mutate_at(dog_descriptions, vars("contact_zip"), ~replace(., is.na(.), 02108))
 # TODO: why is this not padding zip with 0s?
 dog_descriptions <- mutate(dog_descriptions,
@@ -119,13 +118,13 @@ dog_descriptions <- left_join(dog_descriptions, state.abb.and.name, by = c("stat
 # TODO: once joined, drop state and rename state.name to state
 
 # save as processed
-write.csv(dog_descriptions,"data/processed/dog_descriptions.csv", row.names = TRUE)
+write.csv(dog_descriptions,"data/processed/dog_descriptions.csv", row.names = FALSE)
 
 
 # dog_destination
 dog_destination <- read_csv("data/raw/dog_destination.csv") 
 # save as processed
-write.csv(dog_descriptions,"data/processed/dog_destination.csv", row.names = TRUE)
+write.csv(dog_descriptions,"data/processed/dog_destination.csv", row.names = FALSE)
 
 
 # TODO: outliers, errors, and NAs for all three tables
