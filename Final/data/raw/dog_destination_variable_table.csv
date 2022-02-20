@@ -1,0 +1,9 @@
+Variable,class,description
+Id,double,The unique identification number for each animal
+contact_city,character,The rescue/shelter's listed city
+contact_state,character,The rescue/shelter's listed State
+Description,character,The full description of each animal as entered by the rescue/shelter
+Found,character,Where the animal was found.
+Manual,character,.
+Remove,logical,Animal removed from location
+still_there,logical,TRUE/FALSEÿ- Whether the animal is still located in their origin location and will be transported to their final destinationÿafterÿadoption.

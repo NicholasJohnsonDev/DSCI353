@@ -1,0 +1,6 @@
+variable,class,description
+location,character,The full name of the US state or country
+exported,double,The number of adoptable dogs available in the US that originated in this location but were available for adoption in another location
+imported,double,The number of adoptable dogs available in this state that originated in a different location
+Total,double,The total number of adoptable dogs available in a given state.
+inUS,logical,"Whether or not a location is in the US or not. Here, US territories will returnÿFALSE"

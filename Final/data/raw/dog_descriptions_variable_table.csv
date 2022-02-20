@@ -1,0 +1,36 @@
+variable,class,description
+id,double,The unique identification number for each animal.
+org_id,character,The unique identification number for each shelter or rescue.
+species,character,Species of animal.
+breed_primary,character,The primary (assumed) breed assigned by the shelter or rescue.
+breed_secondary,character,The secondary (assumed) breed assigned by the shelter or rescue.
+breed_mixed,logical,Whether or not an animal is presumed to be mixed breed.
+breed_unknown,logical,Whether or not the animal's breed is completely unknown.
+color_primary,character,The most prevalent color of an animal.
+color_secondary,character,The second most prevalent color of an animal.
+color_tertiary,character,The third most prevalent color of an animal.
+age,character,"The assumed age class of an animal (Baby,ÿYoung,ÿAdult, orÿSenior)."
+sex,character,"The sex of an animal (Female,ÿMale, orÿUnknown)."
+size,character,"The general size class of an animal (Small,ÿMedium,ÿLarge,ÿExtra Large)."
+coat,character,"Coat Length for each animal (Curly,ÿHairless,ÿLong,ÿMedium,ÿShort,ÿWire)."
+fixed,logical,Whether or not an animal has been spayed/neutered.
+house_trained,logical,Whether or not an animal is trained to not go to the bathroom in the house.
+declawed,logical,Whether or not the animal has had its dewclaws removed.
+special_needs,logical,Whether or not the animal is considered to have special needs (this can be a long-term medical condition or particular temperament that requires extra care).
+shots_current,logical,Whether or not the animal is up to date on all of their vaccines and other shots.
+env_children,logical,Whether or not the animal is recommended for a home with children.
+env_dogs,logical,Whether or not the animal is recommended for a home with other dogs.
+env_cats,logical,Whether or not the animal is recommended for a home with cats.
+name,character,The animal?s name (as given by the shelter/rescue).
+tags,character,Any tags given to the dog by the shelter rescue (pipeÿ|ÿseparated).
+photo,character,The URL to the animal?s primary photo.
+status,character,Whether the animal isÿadoptableÿor not.
+posted,character,The date that this animal was first listed on a local website .
+contact_city,character,The rescue/shelter?s listed city.
+contact_state,character,The rescue/shelter?s listed state.
+contact_zip,character,The rescue/shelter?s listed zip code.
+contact_country,character,The rescue/shelter?s listed country.
+stateQ,character,The state abbreviation queried in the API to return this result .
+accessed,double,The date that this data was acquired from the PetFinder API.
+type,character,The type of animal.
+description,character,"The full description of an animal, as entered by the rescue or shelter. This is the only field returned by the V1 API."

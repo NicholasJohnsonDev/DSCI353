@@ -48,7 +48,9 @@ here() # set current directory to top-level of project
 
 # 3.3 Data importing and cleaning steps are explained in the text 
 #     (tell me why you are doing the data cleaning activities that you perform) and follow a logical process.
-
+dog_adoptable_variable_table <- read_csv("dog_adoptable_variable_table.csv")
+dog_descriptions_variable_table <- read_csv("dog_descriptions_variable_table.csv")
+dog_destination_variable_table <- read_csv("dog_destination_variable_table.csv")
 
 
 # load dog_adoptable

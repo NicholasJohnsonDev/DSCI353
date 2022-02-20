@@ -1,5 +1,5 @@
 ---
-title: "markdown"
+title: "Doggone Data (Midterm Project)"
 author: "Nicholas Johnson & Samuel Rasely"
 date: "2/16/2022"
 output: html_document
@@ -9,22 +9,229 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+## Introduction
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+As a way of showcasing what we have learned so far, We were tasked with cleaning and exploring one of the data sets provided to us. In our case, we selected the data set pertaining to dogs that are available for adoption in the United States.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+We will be utilizing RStudio to perform cleaning and exploratory analysis on the data set. And, in order to make our work easier to understand, the steps we took will be broken down into the following:
 
-```{r cars}
-summary(cars)
+1. Required Packages
+2. Data Preparation and Cleaning
+3. Proposed Exploratory Analysis
+
+## Required Packages
+``` {r message = FALSE}
+library("tidyverse")# To help tidy up the data
+library("readr")    # To import .csv files in a more feature rich way
+library("here")     # To make it easier to work collaboratively on the project
+library("dplyr")    # For data/dataframe manipulation
 ```
 
-## Including Plots
+## Data Preparation and Cleaning
 
-You can also embed plots, for example:
+As the data was provided to us, the source is [on our class' Canvas page](https://canvas.ewu.edu/courses/1540406/files/87301233?module_item_id=14963744)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+The data is broken down into three .csv files:
+
+* dog_adoptable.csv
+* dog_descriptions.csv
+* dog_destination.csv
+
+The data was collected on 9/20/2019 from various dog adoption organizations across the US.
+
+### First, setting our work directory and retrieving the data
+```{r, warning = FALSE, message = FALSE, results = FALSE}
+here::i_am("Final.Rproj")
+here() # set current directory to top-level of project 
+
+# load dog_adoptable, dog_descriptions and dog_destination
+dog_adoptable <- read_csv("data/raw/dog_adoptable.csv")
+dog_descriptions <- read_csv("data/raw/dog_descriptions.csv")
+dog_destination <- read_csv("data/raw/dog_destination.csv")
+
+# loading the variable information for each table
+dog_adoptable_variable_table <- read_csv("data/raw/dog_adoptable_variable_table.csv")
+dog_descriptions_variable_table <- read_csv("data/raw/dog_descriptions_variable_table.csv")
+dog_destination_variable_table <- read_csv("data/raw/dog_destination_variable_table.csv")
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+<br>
+
+#### Now we can see the variable descriptions for the data we've loaded.
+
+<br>
+
+##### dog_adoptable variables and descriptions
+```{r, echo = FALSE}
+knitr::kable(dog_adoptable_variable_table, col.names = gsub("[.]", " ", names(dog_adoptable_variable_table)))
+```
+
+<br>
+
+##### dog_adoptable variables and descriptions
+```{r, echo = FALSE}
+knitr::kable(dog_descriptions_variable_table, col.names = gsub("[.]", " ", names(dog_adoptable_variable_table)))
+```
+
+<br>
+
+##### dog_adoptable variables and descriptions
+```{r, echo = FALSE}
+knitr::kable(dog_destination_variable_table, col.names = gsub("[.]", " ", names(dog_adoptable_variable_table)))
+```
+
+<br>
+
+#### Prepping to clean
+Now, after reviewing the data set's variables and their meanings we had to decide how to clean them. We found that rather than going through and cleaning ever single variable, it worked better for us to clean the data while keeping in mind what questions we wanted to be able to answer using the data.
+
+<br>
+
+Some of the questions we wanted to answer were:
+
+* How many adoptable dogs were there in each state?
+* What is the most common breed of the adoptable dogs in each state?
+* How long has each dog been up for adoption?
+
+<br>
+
+Figuring out what questions we wanted to ask first helped us shave down the number of variables we needed to keep (and clean) in the data set.
+
+<br>
+
+#### Cleaning the data
+```{r, warning = FALSE, message = FALSE, results = FALSE}
+# dog_adoptable
+
+# update field inUS to snake_case in_us
+dog_adoptable <- rename(dog_adoptable, in_us = inUS)
+
+# filter to just true for in_us
+dog_adoptable <- filter(dog_adoptable, in_us == TRUE)
+
+# drop field in_us as all records have same value
+dog_adoptable <- select(dog_adoptable, !in_us)
+
+# replace all NA with 0
+dog_adoptable <- mutate_all(dog_adoptable, ~replace(., is.na(.), 0))
+
+# rename location to state
+dog_adoptable <- rename(dog_adoptable, state = location)
+
+
+# While there are outliers in exported, imported and total, we found them all to be believable numbers.
+
+# dog_destination (removed)
+
+# dog_descriptions
+
+# drop stateQ as is only "The state abbreviation queried in the API to return this result " 
+dog_descriptions <- select(dog_descriptions, !stateQ)
+
+# drop status field as all are dogs adoptable
+dog_descriptions <- select(dog_descriptions, !status)
+
+# drop species field as all are dogs so adds no value.
+dog_descriptions <- select(dog_descriptions, !species)
+
+# drop type field as all are dogs so adds no value.3 are NA but confirmed they are dogs with their description
+dog_descriptions <- select(dog_descriptions, !type)
+
+# drop photo as all are NA
+dog_descriptions <- select(dog_descriptions, !photo)
+
+# drop name as useless
+dog_descriptions <- select(dog_descriptions, !name)
+
+# drop tags as useless
+dog_descriptions <- select(dog_descriptions, !tags)
+
+# drop declawed as all are NA
+dog_descriptions <- select(dog_descriptions, !declawed)
+
+# drop contact_country as all are in the US, some have state or zip here by error
+dog_descriptions <- filter(dog_descriptions, contact_country == "US")
+dog_descriptions <- select(dog_descriptions, !contact_country)
+
+dog_descriptions <- mutate(dog_descriptions, posted_date = as.Date(posted))
+dog_descriptions <- mutate(dog_descriptions, accessed_date = as.Date(accessed, "%d/%m/%Y"))
+dog_descriptions <- mutate(dog_descriptions, days_in_shelter = 
+                             as.numeric(difftime(dog_descriptions$accessed_date, 
+                                                 dog_descriptions$posted_date , units = c("days"))))
+dog_descriptions <- select(dog_descriptions, !c(posted, posted_date, accessed, accessed_date))
+
+
+# Question: should we convert description to description_length or just drop it?
+dog_descriptions <- select(dog_descriptions, !description)
+
+# Question: drop contact_city and contact_zip ? Are we doing anything lower than the state level?
+
+# fix zip na, all are in Boston 02108
+dog_descriptions <- mutate_at(dog_descriptions, vars("contact_zip"), ~replace(., is.na(.), 02108))
+
+# TODO: why is this not padding zip with 0s?
+dog_descriptions <- mutate(dog_descriptions,
+          zip = str_pad(string = contact_zip,
+                              width = 5,
+                              side = "left",
+                              pad = "0"))
+#rename to city state and zip
+dog_descriptions <- select(dog_descriptions, !contact_zip)
+dog_descriptions <- rename(dog_descriptions, city = contact_city)
+dog_descriptions <- rename(dog_descriptions, state = contact_state)
+
+# state abbreviation to full names
+state.abb.and.name <- tibble(state.abb, state.name)
+
+# TODO: what's wrong with this join
+dog_descriptions <- left_join(dog_descriptions, state.abb.and.name, by = c("state" = "state.abb"))
+
+# breed_secondary
+dog_descriptions$breed_secondary[is.na(dog_descriptions$breed_secondary)] <- "NONE / UNKNOWN"
+
+# color_primary
+dog_descriptions$color_primary[is.na(dog_descriptions$color_primary)] <- "OTHER"
+
+# color_secondary
+dog_descriptions$color_secondary[is.na(dog_descriptions$color_secondary)] <- "NONE / OTHER"
+
+# color_tertiary
+dog_descriptions$color_tertiary[is.na(dog_descriptions$color_tertiary)] <- "NONE / OTHER"
+
+# coat
+dog_descriptions$coat[is.na(dog_descriptions$coat)] <- "OTHER"
+```
+
+<br>
+
+#### Below are small chunks of the cleaned data
+
+<br>
+
+##### dog_adoptable after cleaning
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+
+knitr::kable(head(dog_adoptable), col.names = gsub("[.]", " ", names(dog_adoptable)))
+```
+
+<br>
+
+##### dog_descriptions after cleaning
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+
+knitr::kable(head(dog_descriptions), col.names = gsub("[.]", " ", names(dog_descriptions)))
+```
+<br>
+
+## Proposed Exploratory Analysis
+We mentioned some of the questions we wanted to ask earlier and our proposed analysis is to follow through and answer those questions. Towards that end, we would like to visualize which states have the most dogs available for adoption, and break down those states or regions into the most common breeds of dogs that can be adopted.
+
+Following up on that, we would also like to see if there is a connection in specific traits that might contribute towards the length of time a dog spends being available for adoption (such as being good around kids, cats, or other dogs).
+
+
+
+
+
+
+
+
