@@ -20,7 +20,9 @@
 install.packages("tidyverse")
 install.packages("readr")
 install.packages("here") 
-install.packages(dplyr)
+install.packages("dplyr")
+install.packages("usmap") 
+install.packages("ggplot2")
 
 # 2.2 Messages and warnings resulting from loading the package are suppressed.
 ## quietly = T will suppress warning and messages
@@ -30,6 +32,8 @@ library(tidyverse, quietly = T) # TODO: here initially, break out into needed la
 library(readr, quietly = T) # import csv in a more feature rich way
 library(here, quietly = T) # The here package creates paths relative to the top-level directory, better for sharing code for collaboration
 library(dplyr) # for data/dataframe manipulation
+library(usmap) # US map plots
+library(ggplot2) # data visualization
 
 here::i_am("Final.Rproj")
 here() # set current directory to top-level of project 
@@ -57,6 +61,9 @@ dog_adoptable <- filter(dog_adoptable, in_us == TRUE)
 dog_adoptable <- select(dog_adoptable, !in_us)
 # replace all NA with 0
 dog_adoptable <- mutate_all(dog_adoptable, ~replace(., is.na(.), 0))
+# rename location to state
+dog_adoptable <- rename(dog_adoptable, state = location)
+
 # save as processed
 write.csv(dog_descriptions,"data/processed/dog_adoptable.csv", row.names = FALSE)
 
@@ -76,6 +83,10 @@ dog_descriptions <- select(dog_descriptions, !species)
 dog_descriptions <- select(dog_descriptions, !type)
 # drop photo as all are NA
 dog_descriptions <- select(dog_descriptions, !photo)
+# drop name as useless
+dog_descriptions <- select(dog_descriptions, !name)
+# drop tags as useless
+dog_descriptions <- select(dog_descriptions, !tags)
 # drop declawed as all are NA
 dog_descriptions <- select(dog_descriptions, !declawed)
 # drop contact_country as all are in the US, some have state or zip here by error
@@ -141,6 +152,15 @@ write.csv(dog_descriptions,"data/processed/dog_destination.csv", row.names = FAL
 
 
 # 4 Exploratory Data Analysis ---------------------------------------------
+
+# Dog Availability Per State
+plot_usmap(data = dog_adoptable, values = "total", color = "red") + 
+  scale_fill_continuous(name = "Dogs Adoptable", label = scales::comma) + 
+  theme(legend.position = "right")
+
+# TODO: table of most popular dog per state, frequency and percent within that state
+# use datatable() like air bnb example 
+
 # 4.1 Uncover new information in the data that is not self-evident, do not just plot the data as it is; 
 #     rather, slice and dice the data in different ways, create new variables, 
 #     or join separate data frames to create new summary information).
