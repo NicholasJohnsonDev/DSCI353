@@ -125,7 +125,7 @@ dog_descriptions <- rename(dog_descriptions, state = contact_state)
 # state abbreviation to full names
 state.abb.and.name <- tibble(state.abb, state.name)
 # TODO: what's wrong with this join
-dog_descriptions <- left_join(dog_descriptions, state.abb.and.name, by = c("state", "state.abb"))
+dog_descriptions <- left_join(dog_descriptions, state.abb.and.name, by = c("state" = "state.abb"))
 # TODO: once joined, drop state and rename state.name to state
 
 # save as processed
@@ -140,10 +140,33 @@ write.csv(dog_descriptions,"data/processed/dog_destination.csv", row.names = FAL
 
 # TODO: outliers, errors, and NAs for all three tables
 
+# dog_adoptable
+# While there are outliers in exported, imported and total, I found them all to be believable numbers.
 
+# dog_destination (removed)
+
+# dog_descriptions
+
+# breed_secondary
+dog_descriptions$breed_secondary[is.na(dog_descriptions$breed_secondary)] <- "NONE / UNKNOWN"
+
+# color_primary
+dog_descriptions$color_primary[is.na(dog_descriptions$color_primary)] <- "OTHER"
+
+# color_secondary
+dog_descriptions$color_secondary[is.na(dog_descriptions$color_secondary)] <- "NONE / OTHER"
+
+# color_tertiary
+dog_descriptions$color_tertiary[is.na(dog_descriptions$color_tertiary)] <- "NONE / OTHER"
+
+# coat
+dog_descriptions$coat[is.na(dog_descriptions$coat)] <- "OTHER"
 
 # 3.4 Once your data is clean, show what the final data set looks like. 
 #     However, do not print off a data frame with 200+ rows; show me the data in the most condensed form possible.
+# condensed form?
+head(dog_descriptions, 20)
+head(dog_adoptable, 20)
 
 # 3.5 Provide summary information about the variables of concern in your cleaned data set. 
 #     Do not just print off a bunch of code chunks with str(), summary(), etc. 
