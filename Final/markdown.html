@@ -714,6 +714,8 @@ dog_destination_variable_table &lt;- read_csv(&quot;data/raw/dog_destination_var
 </div>
 <div id="cleaning-the-data" class="section level4">
 <h4>Cleaning the data</h4>
+<div id="dog_adoptable" class="section level5">
+<h5>dog_adoptable</h5>
 <pre class="r"><code># dog_adoptable
 
 # update field inUS to snake_case in_us
@@ -729,14 +731,22 @@ dog_adoptable &lt;- select(dog_adoptable, !in_us)
 dog_adoptable &lt;- mutate_all(dog_adoptable, ~replace(., is.na(.), 0))
 
 # rename location to state
-dog_adoptable &lt;- rename(dog_adoptable, state = location)
-
-
-# While there are outliers in exported, imported and total, we found them all to be believable numbers.
-
-# dog_destination (removed)
-
-# dog_descriptions
+dog_adoptable &lt;- rename(dog_adoptable, state = location)</code></pre>
+<p><br></p>
+<div class="line-block">     Starting with the dog_adoptable data, we renamed the ‘inUS’ variable to in_us, however, since all the observations are located in the US we ended up discarding the ‘in_us’ column. We also renamed the ‘location’ variable to ‘state’ as we felt that title more accurately reflected the values in the column. And, while there are outliers in ‘exported’, ‘imported’ and ‘total’, we found them all of them to be believable values.</div>
+<p><br></p>
+</div>
+<div id="dog_destination" class="section level5">
+<h5>dog_destination</h5>
+<pre class="r"><code># dog_destination (removed)</code></pre>
+<p><br></p>
+<div class="line-block">      The dog_destination data was by and far the worst one. It contained a minimal amount of additional information, and the information it did contain was contradictory. For example, the ‘contact_city’ and ‘contact_state’ would contradict where the ‘found’ variable, and the variables ‘remove’ and ‘still_there’ did not reflect the dog’s change of location.</div>
+<p>Not only this, but the values in the ‘found’ column were inconsistent. It lists countries, counties, cities, and nonsensical values such as ‘Sunday 10am’ or ‘Glaucoma’. As a result, we decided to drop the table completely.</p>
+<p><br></p>
+</div>
+<div id="dog_descriptions" class="section level5">
+<h5>dog_descriptions</h5>
+<pre class="r"><code># dog_descriptions
 
 # drop stateQ as is only &quot;The state abbreviation queried in the API to return this result &quot; 
 dog_descriptions &lt;- select(dog_descriptions, !stateQ)
@@ -759,25 +769,27 @@ dog_descriptions &lt;- select(dog_descriptions, !name)
 # drop tags as useless
 dog_descriptions &lt;- select(dog_descriptions, !tags)
 
+# drop description as useless
+dog_descriptions &lt;- select(dog_descriptions, !description)
+
 # drop declawed as all are NA
 dog_descriptions &lt;- select(dog_descriptions, !declawed)
 
 # drop contact_country as all are in the US, some have state or zip here by error
 dog_descriptions &lt;- filter(dog_descriptions, contact_country == &quot;US&quot;)
-dog_descriptions &lt;- select(dog_descriptions, !contact_country)
-
-dog_descriptions &lt;- mutate(dog_descriptions, posted_date = as.Date(posted))
+dog_descriptions &lt;- select(dog_descriptions, !contact_country)</code></pre>
+<p><br></p>
+<div class="line-block">      Here we went through dog_descriptions and dropped columns that either contained information that we did not need, or had no useful values in them. For example, all of the values for ‘declawed’ were ‘NA’ so we dropped the column.</div>
+<p><br></p>
+</div>
+<div id="dog_destination-continued" class="section level5">
+<h5>dog_destination (continued)</h5>
+<pre class="r"><code>dog_descriptions &lt;- mutate(dog_descriptions, posted_date = as.Date(posted))
 dog_descriptions &lt;- mutate(dog_descriptions, accessed_date = as.Date(accessed, &quot;%d/%m/%Y&quot;))
 dog_descriptions &lt;- mutate(dog_descriptions, days_in_shelter = 
                              as.numeric(difftime(dog_descriptions$accessed_date, 
                                                  dog_descriptions$posted_date , units = c(&quot;days&quot;))))
 dog_descriptions &lt;- select(dog_descriptions, !c(posted, posted_date, accessed, accessed_date))
-
-
-# Question: should we convert description to description_length or just drop it?
-dog_descriptions &lt;- select(dog_descriptions, !description)
-
-# Question: drop contact_city and contact_zip ? Are we doing anything lower than the state level?
 
 # fix zip na, all are in Boston 02108
 dog_descriptions &lt;- mutate_at(dog_descriptions, vars(&quot;contact_zip&quot;), ~replace(., is.na(.), 02108))
@@ -788,6 +800,7 @@ dog_descriptions &lt;- mutate(dog_descriptions,
                               width = 5,
                               side = &quot;left&quot;,
                               pad = &quot;0&quot;))
+
 #rename to city state and zip
 dog_descriptions &lt;- select(dog_descriptions, !contact_zip)
 dog_descriptions &lt;- rename(dog_descriptions, city = contact_city)
@@ -796,10 +809,15 @@ dog_descriptions &lt;- rename(dog_descriptions, state = contact_state)
 # state abbreviation to full names
 state.abb.and.name &lt;- tibble(state.abb, state.name)
 
-# TODO: what&#39;s wrong with this join
-dog_descriptions &lt;- left_join(dog_descriptions, state.abb.and.name, by = c(&quot;state&quot; = &quot;state.abb&quot;))
-
-# breed_secondary
+# left join for state information
+dog_descriptions &lt;- left_join(dog_descriptions, state.abb.and.name, by = c(&quot;state&quot; = &quot;state.abb&quot;))</code></pre>
+<p><br></p>
+<p>In this section we renamed, and mutated some variables.</p>
+<p><br></p>
+</div>
+<div id="dog_destination-continued-1" class="section level5">
+<h5>dog_destination (continued)</h5>
+<pre class="r"><code># breed_secondary
 dog_descriptions$breed_secondary[is.na(dog_descriptions$breed_secondary)] &lt;- &quot;NONE / UNKNOWN&quot;
 
 # color_primary
@@ -814,6 +832,10 @@ dog_descriptions$color_tertiary[is.na(dog_descriptions$color_tertiary)] &lt;- &q
 # coat
 dog_descriptions$coat[is.na(dog_descriptions$coat)] &lt;- &quot;OTHER&quot;</code></pre>
 <p><br></p>
+<div class="line-block">      Here we took care of the remaining ‘NA’ values in the character type columns. As opposed to having colors or breeds being listed as ‘NA’ we decided that a value of ‘NONE / UNKOWN’, ‘NONE / OTHER’, or ‘OTHER’ were more appropriate.<br />
+      The reasoning behind our logic was that a dog could be purebred or a mix of different breeds with no distinguishable second primary breed. We applied the same logic to the dog coloration and coat since sometimes there is no obviously dominant coloration or appropriate descriptor for what the dog might be.</div>
+<p><br></p>
+</div>
 </div>
 <div id="below-are-small-chunks-of-the-cleaned-data" class="section level4">
 <h4>Below are small chunks of the cleaned data</h4>
@@ -1101,8 +1123,8 @@ dog_descriptions$coat[is.na(dog_descriptions$coat)] &lt;- &quot;OTHER&quot;</cod
 </div>
 <div id="proposed-exploratory-analysis" class="section level2">
 <h2>Proposed Exploratory Analysis</h2>
-<p>We mentioned some of the questions we wanted to ask earlier and our proposed analysis is to follow through and answer those questions. Towards that end, we would like to visualize which states have the most dogs available for adoption, and break down those states or regions into the most common breeds of dogs that can be adopted.</p>
-<p>Following up on that, we would also like to see if there is a connection in specific traits that might contribute towards the length of time a dog spends being available for adoption (such as being good around kids, cats, or other dogs).</p>
+<div class="line-block">      We mentioned some of the questions we wanted to ask earlier and our proposed analysis is to follow through and answer those questions. Towards that end, we would like to visualize which states have the most dogs available for adoption, and break down those states or regions into the most common breeds of dogs that can be adopted.</div>
+<div class="line-block">      Following up on that, we would also like to see if there is a connection in specific traits that might contribute towards the length of time a dog spends being available for adoption (such as being good around kids, cats, or other dogs).</div>
 </div>
 
 
