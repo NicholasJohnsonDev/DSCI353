@@ -11,7 +11,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-As a way of showcasing what we have learned so far, We were tasked with cleaning and exploring one of the data sets provided to us. In our case, we selected the data set pertaining to dogs that are available for adoption in the United States.
+As a way of showcasing what we have learned so far, we were tasked with cleaning and exploring one of the data sets provided to us. In our case, we selected the data set pertaining to dogs that are available for adoption in the United States.
 
 We will be utilizing RStudio to perform cleaning and exploratory analysis on the data set. And, in order to make our work easier to understand, the steps we took will be broken down into the following:
 

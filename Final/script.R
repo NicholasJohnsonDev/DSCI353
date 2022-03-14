@@ -178,13 +178,47 @@ head(dog_adoptable, 20)
 
 # 4 Exploratory Data Analysis ---------------------------------------------
 
-# Dog Availability Per State
+# 2. How many adoptable dogs were there in each state?
 plot_usmap(data = dog_adoptable, values = "total", color = "red") + 
   scale_fill_continuous(name = "Dogs Adoptable", label = scales::comma) + 
-  theme(legend.position = "right")
+  theme(legend.position = "right") +
+  ggtitle("Adoptable Dog In Each State") +
+  theme(plot.title = element_text(hjust = 0.5))
+
+dog_adoptable %>% 
+  select(state, total) %>%
+  arrange(desc(total))
+  
 
 # TODO: table of most popular dog per state, frequency and percent within that state
 # use datatable() like air bnb example 
+# datatable(head(AirB_tibClean, 8),options = list(scrollX=TRUE, pageLength=4))
+
+
+#3. What is the most common breed of the adoptable dogs in each state?
+# dog_descriptions: breed_primary, state, frequency # derive frequency by group
+temp1 <- dog_descriptions %>%
+  select(breed_primary, state) %>% 
+  group_by(state, breed_primary) %>% 
+  summarise(count = n()) %>% 
+  group_by(state) %>% 
+  summarise(count = max(count))
+
+
+temp2 <- dog_descriptions %>%
+  select(breed_primary, state) %>% 
+  group_by(state, breed_primary) %>% 
+  summarise(count = n())
+
+#tie in SD and MT
+most_breed_per_state <-  left_join(temp1, temp2, by=c("state", "count"))
+most_breed_per_state$state_breed <- paste(most_breed_per_state$state, most_breed_per_state$breed_primary, sep="-")
+most_breed_per_state <- select(most_breed_per_state, state_breed, count)
+
+ggplot(data = most_breed_per_state, aes(x = count, y = state_breed)) + 
+  geom_col() +
+  ggtitle("Most Popular Dog By State") +
+  theme(plot.title = element_text(hjust = 0.5))
 
 # 4.1 Uncover new information in the data that is not self-evident, do not just plot the data as it is; 
 #     rather, slice and dice the data in different ways, create new variables, 
@@ -227,3 +261,4 @@ plot_usmap(data = dog_adoptable, values = "total", color = "red") +
 #     e.g., extraordinary effort, additional tools not addressed by this course, 
 #     unusually sophisticated application of tools from course.
 # 7.4 .Rmd fully executes without any errors and HTML produced matches the HTML report submitted by student.
+
