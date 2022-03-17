@@ -30,9 +30,9 @@ install.packages("DT")
 ## quietly = T will suppress warning and messages
 
 # 2.3 Explanation is provided regarding the purpose of each package
-library(tidyverse, quietly = T) # TODO: here initially, break out into needed later and add descriptions why you have each
-library(readr, quietly = T) # import csv in a more feature rich way
-library(here, quietly = T) # The here package creates paths relative to the top-level directory, better for sharing code for collaboration
+library(tidyverse) # To help tidy up the data
+library(readr) # import csv in a more feature rich way
+library(here) # The here package creates paths relative to the top-level directory, better for sharing code for collaboration
 library(dplyr) # for data/dataframe manipulation
 library(usmap) # US map plots
 library(ggplot2) # data visualization
@@ -76,8 +76,6 @@ write.csv(dog_descriptions,"data/processed/dog_adoptable.csv", row.names = FALSE
 
 # dog_descriptions
 dog_descriptions <- read_csv("data/raw/dog_descriptions.csv") 
-#TODO: One or more parsing issues, see `problems()` for details
-# problem may be from some having commas in values like with id 41330726
 
 # drop stateQ as is only "The state abbreviation queried in the API to return this result " 
 dog_descriptions <- select(dog_descriptions, !stateQ)
@@ -99,8 +97,7 @@ dog_descriptions <- select(dog_descriptions, !declawed)
 dog_descriptions <- filter(dog_descriptions, contact_country == "US")
 dog_descriptions <- select(dog_descriptions, !contact_country)
 
-# TODO: handle city and state names in datetime field. do we need this at all? 
-# TODO:  Shows us how long they have been in for. Perhaps derive days_available from accessed - posted. dogs there longer are less desireable
+# determine days in shelter
 dog_descriptions <- mutate(dog_descriptions, posted_date = as.Date(posted))
 dog_descriptions <- mutate(dog_descriptions, accessed_date = as.Date(accessed, "%d/%m/%Y"))
 dog_descriptions <- mutate(dog_descriptions, days_in_shelter = 
@@ -109,15 +106,12 @@ dog_descriptions <- mutate(dog_descriptions, days_in_shelter =
 dog_descriptions <- select(dog_descriptions, !c(posted, posted_date, accessed, accessed_date))
 
 
-# Question: should we convert description to description_length or just drop it?
 dog_descriptions <- select(dog_descriptions, !description)
-
-# Question: drop contact_city and contact_zip ? Are we doing anything lower than the state level?
-
 
 # fix zip na, all are in Boston 02108
 dog_descriptions <- mutate_at(dog_descriptions, vars("contact_zip"), ~replace(., is.na(.), 02108))
-# TODO: why is this not padding zip with 0s?
+
+# padding zip with 0s
 dog_descriptions <- mutate(dog_descriptions,
           zip = str_pad(string = contact_zip,
                               width = 5,
@@ -130,9 +124,7 @@ dog_descriptions <- rename(dog_descriptions, state = contact_state)
 
 # state abbreviation to full names
 state.abb.and.name <- tibble(state.abb, state.name)
-# TODO: what's wrong with this join
 dog_descriptions <- left_join(dog_descriptions, state.abb.and.name, by = c("state" = "state.abb"))
-# TODO: once joined, drop state and rename state.name to state
 
 # save as processed
 write.csv(dog_descriptions,"data/processed/dog_descriptions.csv", row.names = FALSE)
@@ -143,8 +135,6 @@ dog_destination <- read_csv("data/raw/dog_destination.csv")
 # save as processed
 write.csv(dog_descriptions,"data/processed/dog_destination.csv", row.names = FALSE)
 
-
-# TODO: outliers, errors, and NAs for all three tables
 
 # dog_adoptable
 # While there are outliers in exported, imported and total, I found them all to be believable numbers.
@@ -264,8 +254,7 @@ most_breed_per_state <- mutate(most_breed_per_state, percent = count/total*100)
 most_breed_per_state <- select(most_breed_per_state, -c("exported", "imported"))
 most_breed_per_state <- most_breed_per_state[, c(1, 3, 2, 4, 5)]
 
-
-
+print(tbl_df(most_breed_per_state), n=100)
 # 4.1 Uncover new information in the data that is not self-evident, do not just plot the data as it is; 
 #     rather, slice and dice the data in different ways, create new variables, 
 #     or join separate data frames to create new summary information).
