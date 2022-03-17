@@ -26,10 +26,10 @@ library("tidyverse")# To help tidy up the data
 library("readr")    # To import .csv files in a more feature rich way
 library("here")     # To make it easier to work collaboratively on the project
 library("dplyr")    # For data/dataframe manipulation
-library("usmap")      # US map plots
-library("ggplot2")    # Data visualization
-library("prettydoc") # document themes for R Markdown
-library("DT") # used for displaying R data objects (matrices or data frames) as tables on HTML pages
+library("usmap")    # US map plots
+library("ggplot2")  # Data visualization
+library("prettydoc")# document themes for R Markdown
+library("DT")       # used for displaying R data objects (matrices or data frames) as tables on HTML pages
 
 ```
 
@@ -256,16 +256,14 @@ dog_descriptions$coat[is.na(dog_descriptions$coat)] <- "OTHER"
 
 ##### dog_adoptable after cleaning
 ```{r, warning = FALSE, message = FALSE, echo = FALSE}
-
-knitr::kable(head(dog_adoptable), col.names = gsub("[.]", " ", names(dog_adoptable)))
+datatable(dog_adoptable,options = list(scrollX=TRUE, pageLength=10))
 ```
 
 <br>
 
 ##### dog_descriptions after cleaning
 ```{r, warning = FALSE, message = FALSE, echo = FALSE}
-
-knitr::kable(head(dog_descriptions), col.names = gsub("[.]", " ", names(dog_descriptions)))
+datatable(dog_descriptions,options = list(scrollX=TRUE, pageLength=10))
 ```
 <br>
 
@@ -289,8 +287,9 @@ Our finalized questions for the exploratory analysis are:
 <br>
 
 ### How many adoptable dogs are there in each state?
-This information can be found using the dog_adoptable data set,
-Below is a heat map of the United states to visualize the availability of dogs in shelters per state. The lighter- blue the state represents a greater number of available dogs, where the darker blue represents fewer available dogs. 
+This question is to give us the initial idea of the spread across the nation.
+This information can be found using the dog_adoptable data set. Using the state and total columns, we were able to build the below map.
+Below is a heat map of the United states to visualize the availability of dogs in shelters per state. The lighter blue the state represents a greater number of available dogs, where the darker blue represents fewer available dogs. 
 ```{r, warning = FALSE, message = FALSE, echo = TRUE}
 # Heat-map of adoptable dogs per state
 plot_usmap(data = dog_adoptable, values = "total", color = "red") + 
@@ -299,6 +298,7 @@ plot_usmap(data = dog_adoptable, values = "total", color = "red") +
   ggtitle("Adoptable Dogs In Each State") +
   theme(plot.title = element_text(hjust = 0.5))
 ```
+<br>
 Where the above map may be nice to get an idea if regionality is at play, this table will let you know the exact count for each state. 
 ```{r, warning = FALSE, message = FALSE, echo = TRUE}
 # Table of adoptable dogs per state
@@ -312,31 +312,38 @@ datatable(adoptable_table,options = list(scrollX=TRUE, pageLength=10))
 <br>
 
 ### What is the most common breed up for adoption in each state?
-The code below was done this way to maintain each observation in he case of a tie instead of dropping one. Note that there are 53 observations because there are two ties and DC is counted as a state.
+This question was more complex than the first. It required grouping and join across multiple data sets, which become more complicated as they didn't contain all complimentary data of the other (e.g.: D.C.).
+The code below was done this way to maintain each observation in he case of a tie instead of dropping one. Note that there are 52 observations because there are two ties, in South Dakota and Montana.
 ```{r, warning = FALSE, message = FALSE, echo = TRUE}
 # Table of adoptable dogs per state
-# State and 
+# State and count of max breed
 temp1 <- dog_descriptions %>%
-  select(breed_primary, state) %>% 
-  group_by(state, breed_primary) %>% 
+  select(breed_primary, state.name) %>% 
+  group_by(state.name, breed_primary) %>% 
   summarise(count = n()) %>% 
-  group_by(state) %>% 
+  group_by(state.name) %>% 
   summarise(count = max(count))
+#remove DC as is not in all data sets
+temp1 = na.omit(temp1)
 
+# state with all breed count
 temp2 <- dog_descriptions %>%
-  select(breed_primary, state) %>% 
-  group_by(state, breed_primary) %>% 
+  select(breed_primary, state.name) %>% 
+  group_by(state.name, breed_primary) %>% 
   summarise(count = n())
 
-most_breed_per_state <-  left_join(temp1, temp2, by=c("state", "count"))
-most_breed_per_state$state_breed <- paste(most_breed_per_state$state, most_breed_per_state$breed_primary, sep="-")
-most_breed_per_state <- select(most_breed_per_state, state_breed, count)
-
-ggplot(data = most_breed_per_state, aes(x = count, y = state_breed)) + 
-  geom_col() +
-  ggtitle("Most Popular Dog By State") +
-  theme(plot.title = element_text(hjust = 0.5))
+# remove all that aren't the max count for tat state and adds breed
+most_breed_per_state <-  left_join(temp1, temp2, by=c("state.name", "count"))
+colnames(most_breed_per_state)[which(names(most_breed_per_state) == "state.name")] <- "state"
+most_breed_per_state <- left_join(most_breed_per_state, dog_adoptable, by="state")
+# get percent and reorder
+most_breed_per_state <- mutate(most_breed_per_state, percent = count/total*100)
+most_breed_per_state <- select(most_breed_per_state, -c("exported", "imported"))
+most_breed_per_state <- most_breed_per_state[, c(1, 3, 2, 4, 5)]
+# tie in SD and MT
+datatable(most_breed_per_state,options = list(scrollX=TRUE, pageLength=10))
 ```
+With this data we can make assumptions of what is available in certain states, and therefore assume the inverse that those breeds are not in demand there. With this knowledge you can make recommendations for transferring dogs to other states to increase their chance of adoption. (Note that this is an imperfect method of determining demand as we don't also have data on dogs that have been adopted in the past, just what are available now.)
 
 <br>
 
@@ -360,7 +367,7 @@ breed_count <- dog_descriptions %>%
 ```
 Result:
 ```{r, warning = FALSE, message = FALSE, echo = FALSE}
-knitr::kable(head(breed_count, 10), col.names = gsub("[.]", " ", names(breed_count)))
+datatable(breed_count,options = list(scrollX=TRUE, pageLength=10))
 ```
 
 <br>
@@ -376,7 +383,7 @@ average_shelter_time <- dog_descriptions %>%
 ```
 Result:
 ```{r, warning = FALSE, message = FALSE, echo = FALSE}
-knitr::kable(head(average_shelter_time, 10), col.names = gsub("[.]", " ", names(average_shelter_time)))
+datatable(average_shelter_time,options = list(scrollX=TRUE, pageLength=10))
 ```
 
 <br>
@@ -394,7 +401,7 @@ common_breed_summary <-
 
 Result:
 ```{r, warning = FALSE, message = FALSE, echo = FALSE}
-knitr::kable(common_breed_summary, col.names = gsub("[.]", " ", names(common_breed_summary)))
+datatable(common_breed_summary,options = list(scrollX=TRUE, pageLength=10))
 ```
 
 
@@ -404,7 +411,6 @@ While we're at it, let's grab the overall average amount of time that dogs spend
 ```{r, warning = FALSE, message = FALSE, echo = TRUE}
 # Getting the average amount of time each dog spends in the shelter
 overall_average <- round(mean(dog_descriptions$days_in_shelter))
-
 ```
 
 Now we have something to relate our data to we'll go ahead and visualize the information from the table and compare it to the average. We'll be use a bar graph for our visualization.
@@ -434,7 +440,7 @@ common_breed_summary <- common_breed_summary %>%
 ```
 Result:
 ```{r, warning = FALSE, message = FALSE, echo = FALSE}
-knitr::kable(common_breed_summary, col.names = gsub("[.]", " ", names(common_breed_summary)))
+datatable(common_breed_summary,options = list(scrollX=TRUE, pageLength=10))
 ```
 
 |       With this we now have the additional numerical context for the bar graph without cluttering up the visualization. With the overall average number of days a given dog will spend waiting to be adopted as our 100% mark, we now know how long on average each given breed spends in a shelter in comparison to it.

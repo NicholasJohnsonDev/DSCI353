@@ -243,27 +243,28 @@ dog_adoptable %>%
 #3. What is the most common breed of the adoptable dogs in each state?
 # dog_descriptions: breed_primary, state, frequency # derive frequency by group
 temp1 <- dog_descriptions %>%
-  select(breed_primary, state) %>% 
-  group_by(state, breed_primary) %>% 
+  select(breed_primary, state.name) %>% 
+  group_by(state.name, breed_primary) %>% 
   summarise(count = n()) %>% 
-  group_by(state) %>% 
+  group_by(state.name) %>% 
   summarise(count = max(count))
+temp1 <- mutate_at(temp1, vars(state.name), ~replace(., is.na(.), "DC"))
 
 
 temp2 <- dog_descriptions %>%
-  select(breed_primary, state) %>% 
-  group_by(state, breed_primary) %>% 
+  select(breed_primary, state.name) %>% 
+  group_by(state.name, breed_primary) %>% 
   summarise(count = n())
 
 #tie in SD and MT
-most_breed_per_state <-  left_join(temp1, temp2, by=c("state", "count"))
-most_breed_per_state$state_breed <- paste(most_breed_per_state$state, most_breed_per_state$breed_primary, sep="-")
-most_breed_per_state <- select(most_breed_per_state, state_breed, count)
+most_breed_per_state <-  left_join(temp1, temp2, by=c("state.name", "count"))
+colnames(most_breed_per_state)[which(names(most_breed_per_state) == "state.name")] <- "state"
+most_breed_per_state <- left_join(most_breed_per_state, dog_adoptable, by="state")
+most_breed_per_state <- mutate(most_breed_per_state, percent = count/total*100)
+most_breed_per_state <- select(most_breed_per_state, -c("exported", "imported"))
+most_breed_per_state <- most_breed_per_state[, c(1, 3, 2, 4, 5)]
 
-ggplot(data = most_breed_per_state, aes(x = count, y = state_breed)) + 
-  geom_col() +
-  ggtitle("Most Popular Dog By State") +
-  theme(plot.title = element_text(hjust = 0.5))
+
 
 # 4.1 Uncover new information in the data that is not self-evident, do not just plot the data as it is; 
 #     rather, slice and dice the data in different ways, create new variables, 
