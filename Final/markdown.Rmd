@@ -26,8 +26,11 @@ library("tidyverse")# To help tidy up the data
 library("readr")    # To import .csv files in a more feature rich way
 library("here")     # To make it easier to work collaboratively on the project
 library("dplyr")    # For data/dataframe manipulation
-library(usmap)      # US map plots
-library(ggplot2)    # Data visualization
+library("usmap")      # US map plots
+library("ggplot2")    # Data visualization
+library("prettydoc") # document themes for R Markdown
+library("DT") # used for displaying R data objects (matrices or data frames) as tables on HTML pages
+
 ```
 
 ## Data Preparation and Cleaning
@@ -286,10 +289,54 @@ Our finalized questions for the exploratory analysis are:
 <br>
 
 ### How many adoptable dogs are there in each state?
+This information can be found using the dog_adoptable data set,
+Below is a heat map of the United states to visualize the availability of dogs in shelters per state. The lighter- blue the state represents a greater number of available dogs, where the darker blue represents fewer available dogs. 
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Heat-map of adoptable dogs per state
+plot_usmap(data = dog_adoptable, values = "total", color = "red") + 
+  scale_fill_continuous(name = "Dogs Adoptable", label = scales::comma) + 
+  theme(legend.position = "right") +
+  ggtitle("Adoptable Dogs In Each State") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
+Where the above map may be nice to get an idea if regionality is at play, this table will let you know the exact count for each state. 
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Table of adoptable dogs per state
+adoptable_table <- dog_adoptable %>% 
+  select(state, total) %>%
+  arrange(desc(total))
+datatable(adoptable_table,options = list(scrollX=TRUE, pageLength=10))
+```
+
 
 <br>
 
 ### What is the most common breed up for adoption in each state?
+The code below was done this way to maintain each observation in he case of a tie instead of dropping one. Note that there are 53 observations because there are two ties and DC is counted as a state.
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Table of adoptable dogs per state
+# State and 
+temp1 <- dog_descriptions %>%
+  select(breed_primary, state) %>% 
+  group_by(state, breed_primary) %>% 
+  summarise(count = n()) %>% 
+  group_by(state) %>% 
+  summarise(count = max(count))
+
+temp2 <- dog_descriptions %>%
+  select(breed_primary, state) %>% 
+  group_by(state, breed_primary) %>% 
+  summarise(count = n())
+
+most_breed_per_state <-  left_join(temp1, temp2, by=c("state", "count"))
+most_breed_per_state$state_breed <- paste(most_breed_per_state$state, most_breed_per_state$breed_primary, sep="-")
+most_breed_per_state <- select(most_breed_per_state, state_breed, count)
+
+ggplot(data = most_breed_per_state, aes(x = count, y = state_breed)) + 
+  geom_col() +
+  ggtitle("Most Popular Dog By State") +
+  theme(plot.title = element_text(hjust = 0.5))
+```
 
 <br>
 

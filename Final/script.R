@@ -23,6 +23,8 @@ install.packages("here")
 install.packages("dplyr")
 install.packages("usmap") 
 install.packages("ggplot2")
+install.packages("prettydoc") 
+install.packages("DT")
 
 # 2.2 Messages and warnings resulting from loading the package are suppressed.
 ## quietly = T will suppress warning and messages
@@ -34,6 +36,8 @@ library(here, quietly = T) # The here package creates paths relative to the top-
 library(dplyr) # for data/dataframe manipulation
 library(usmap) # US map plots
 library(ggplot2) # data visualization
+library(prettydoc) # document themes for R Markdown
+library(DT) # used for displaying R data objects (matrices or data frames) as tables on HTML pages
 
 here::i_am("Final.Rproj")
 here() # set current directory to top-level of project 
@@ -228,17 +232,12 @@ ggplot(data = common_breed_summary,
 plot_usmap(data = dog_adoptable, values = "total", color = "red") + 
   scale_fill_continuous(name = "Dogs Adoptable", label = scales::comma) + 
   theme(legend.position = "right") +
-  ggtitle("Adoptable Dog In Each State") +
+  ggtitle("Adoptable Dogs In Each State") +
   theme(plot.title = element_text(hjust = 0.5))
 
 dog_adoptable %>% 
   select(state, total) %>%
   arrange(desc(total))
-  
-
-# TODO: table of most popular dog per state, frequency and percent within that state
-# use datatable() like air bnb example 
-# datatable(head(AirB_tibClean, 8),options = list(scrollX=TRUE, pageLength=4))
 
 
 #3. What is the most common breed of the adoptable dogs in each state?
