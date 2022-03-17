@@ -1,5 +1,5 @@
 ---
-title: "Doggone Data (Midterm Project)"
+title: "Doggone Data (Final Project)"
 author: "Nicholas Johnson & Samuel Rasely"
 date: "2/16/2022"
 output: html_document
@@ -11,20 +11,23 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## Introduction
 
-As a way of showcasing what we have learned so far, we were tasked with cleaning and exploring one of the data sets provided to us. In our case, we selected the data set pertaining to dogs that are available for adoption in the United States.
+As a way of showcasing what we have learned so far, we were tasked with cleaning and exploring one of the data sets provided to us. Towards that end, we selected the data set pertaining to dogs that are available for adoption in the United States. Using this data, we will attempt to draw some big-picture insights about the population of sheltered dogs in the US.
 
 We will be utilizing RStudio to perform cleaning and exploratory analysis on the data set. And, in order to make our work easier to understand, the steps we took will be broken down into the following:
 
 1. Required Packages
 2. Data Preparation and Cleaning
-3. Proposed Exploratory Analysis
+3. Exploratory Analysis
+4. Summary
 
 ## Required Packages
-``` {r message = FALSE}
+``` {r message = FALSE, warning = FALSE}
 library("tidyverse")# To help tidy up the data
 library("readr")    # To import .csv files in a more feature rich way
 library("here")     # To make it easier to work collaboratively on the project
 library("dplyr")    # For data/dataframe manipulation
+library(usmap)      # US map plots
+library(ggplot2)    # Data visualization
 ```
 
 ## Data Preparation and Cleaning
@@ -263,15 +266,149 @@ knitr::kable(head(dog_descriptions), col.names = gsub("[.]", " ", names(dog_desc
 ```
 <br>
 
-## Proposed Exploratory Analysis
-|       We mentioned some of the questions we wanted to ask earlier and our proposed analysis is to follow through and answer those questions. Towards that end, we would like to visualize which states have the most dogs available for adoption, and break down those states or regions into the most common breeds of dogs that can be adopted.
+## Exploratory Analysis
+|       After cleaning the data, we reconsidered the questions we wanted to ask of it.
 
-|       Following up on that, we would also like to see if there is a connection in specific traits that might contribute towards the length of time a dog spends being available for adoption (such as being good around kids, cats, or other dogs).
+>* How many adoptable dogs were there in each state?
+>* What is the most common breed of the adoptable dogs in each state?
+>* How long has each dog been up for adoption?
+
+|       We felt that our first two questions would provide quality information on how the overall population of adoptable dogs was broken up in each state. Our third question however, only addressed dogs at an individual level. While knowing how long each dog has been up for adoption is good information to have, we felt that we could do more. Instead of just extracting that information, we decided to put it to use and see what we could get out of it. 
+
+<br>
+
+Our finalized questions for the exploratory analysis are:
+
+* How many adoptable dogs are there in each state?
+* What is the most common breed up for adoption in each state?
+* What is the average length of time each breed spends up for adoption?
+
+<br>
+
+### How many adoptable dogs are there in each state?
+
+<br>
+
+### What is the most common breed up for adoption in each state?
+
+<br>
+
+### What is the average length of time each breed spends up for adoption?
+|       In dog_descriptions, there are four columns relating to breed. These columns are: breed_primary, breed_secondary, breed_mixed, and breed_unknown. The first two are character values, and the last two are boolean values. We opted to utilize the breed_primary column since it seemed like the best fit for our purposes.
+
+<br>
+
+Note: Since the breed_primary column contains 216 different breeds, we will restrict our scope and only look at the ten most common breeds that are up for adoption.
+
+<br>
+
+First things first, is a bit of setup. We need to get a count of how many dogs of each breed there are in the shelters.
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Count each dog in the shelter grouped by breed_primary
+breed_count <- dog_descriptions %>%
+  group_by(breed_primary) %>%
+  count(breed_primary) %>%
+  rename("in_shelter" = n) %>%
+  arrange(desc(in_shelter))
+```
+Result:
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+knitr::kable(head(breed_count, 10), col.names = gsub("[.]", " ", names(breed_count)))
+```
+
+<br>
+
+Next, we need to find the average amount of time each breed spends in up for adoption.
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Find the average amount of time each breed spends in the shelter
+average_shelter_time <- dog_descriptions %>%
+  group_by(breed_primary) %>%
+  summarize(breed_average_shelter_time = round(mean(days_in_shelter), 0))
 
 
+```
+Result:
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+knitr::kable(head(average_shelter_time, 10), col.names = gsub("[.]", " ", names(average_shelter_time)))
+```
+
+<br>
+
+Now to join the two tables.
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Join the previous two tables, arrange them (desc) and get the first ten
+common_breed_summary <- 
+  inner_join(breed_count, average_shelter_time, by = "breed_primary") %>%
+  select(breed_primary, in_shelter, breed_average_shelter_time) %>%
+  group_by(breed_primary) %>%
+  arrange(desc(in_shelter)) %>%
+  head(10)
+```
+
+Result:
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+knitr::kable(common_breed_summary, col.names = gsub("[.]", " ", names(common_breed_summary)))
+```
 
 
+<br>
 
+While we're at it, let's grab the overall average amount of time that dogs spend up for adoption.
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Getting the average amount of time each dog spends in the shelter
+overall_average <- round(mean(dog_descriptions$days_in_shelter))
 
+```
 
+Now we have something to relate our data to we'll go ahead and visualize the information from the table and compare it to the average. We'll be use a bar graph for our visualization.
 
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+# Visualization (bar graph)
+ggplot(data = common_breed_summary, 
+       aes(x = breed_primary, y = breed_average_shelter_time)) +
+  geom_col(fill="cornflowerblue", aes(reorder(breed_primary, in_shelter))) + 
+  geom_hline(yintercept = overall_average) +
+  coord_flip() +
+  ggtitle("Average Time the Ten Most Common Breeds Spend in a Shelter")
+```
+
+<br>
+
+Now we have a chart of the ten most common breeds as they relate to the average (which is represented by the black vertical line). But, while the chart is nice, it feels a bit lacking in numerical context. So we decided to create a table for that information.
+
+<br>
+With a little bit of math we can create a new column compared_to_average that shows how each breed's average compares to the overall average as a percentage.
+```{r, warning = FALSE, message = FALSE, echo = TRUE}
+# Getting time spent in shelter as a percentage of overall average
+common_breed_summary <- common_breed_summary %>%
+  mutate(compared_to_average = 
+           round(breed_average_shelter_time / overall_average * 100 - 100, 2))
+
+```
+Result:
+```{r, warning = FALSE, message = FALSE, echo = FALSE}
+knitr::kable(common_breed_summary, col.names = gsub("[.]", " ", names(common_breed_summary)))
+```
+
+|       With this we now have the additional numerical context for the bar graph without cluttering up the visualization. With the overall average number of days a given dog will spend waiting to be adopted as our 100% mark, we now know how long on average each given breed spends in a shelter in comparison to it.
+<br>
+
+For example, of the ten most common breeds found in shelters across the US, 'Mixed Breed' dogs get adopted in 50.77% faster than the average. While 'American Staffordshire Terrier' breed dogs take an additional 72.31% of the average time to get adopted. 
+
+<br>
+
+## Summary of Analysis
+
+  The purpose of our analysis was to draw big-picture insights from the data set about shelter dogs in the United States. Towards that end we:
+
+* Learned more about the variables and their meanings.
+* Examined how the tables in our data set related to each other.
+* Came up with questions pertaining to our data set.
+* Cleaned our data in a fashion that would allow us to answer the questions we had.
+* Created additional variables capable of giving us more insight.
+* Used our cleaned data to answer our questions.
+
+|       Our resulting analysis provides a breakdown of information about the population of shelter dogs in the US. These insights include, the number of shelter dogs in each state, the most common breeds of shelter dogs in each state, and how long, on average, each breed spends waiting to be adopted.
+
+|       These insights paint a picture of the adoptable dogs in the US as a whole. However, the methods we used to extract this information are perfectly capable of being scaled down to the state, or even city level. And, while we did remove some data in the process of cleaning, the information that we did keep could be used to examine what factors contribute to how long a dog may remain in a shelter. 
+|       If one were to further analyze this data set, they could determine what traits make a dog more desirable in different parts of the country. This means that shelters could work on developing those traits in their dogs, or could send dogs to a location where the traits they have are found to be more desirable. This could help minimize the amount of time dogs spend in shelters, and reduce the overall population of shelter dogs in the US.

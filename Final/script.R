@@ -178,6 +178,52 @@ head(dog_adoptable, 20)
 
 # 4 Exploratory Data Analysis ---------------------------------------------
 
+# 1. What is the average length of time each breed spends in a shelter?
+dog_descriptions %>% 
+  group_by(breed_primary) %>%
+  count(breed_primary)
+
+# Count each dog in the shelter grouped by breed_primary
+breed_count <- dog_descriptions %>%
+  group_by(breed_primary) %>%
+  count(breed_primary) %>%
+  rename("in_shelter" = n) %>%
+  arrange(desc(in_shelter))
+head(breed_count, 10)
+
+# Find the average amount of time each breed spends in the shelter
+average_shelter_time <- dog_descriptions %>%
+  group_by(breed_primary) %>%
+  summarize(average_time_in_shelter = round(mean(days_in_shelter), 0))
+head(average_shelter_time, 10)
+
+# Join the previous two tables, arrange them (desc) and get the first ten
+common_breed_summary <- 
+  inner_join(breed_count, average_shelter_time, by = "breed_primary") %>%
+  select(breed_primary, in_shelter, average_time_in_shelter) %>%
+  group_by(breed_primary) %>%
+  arrange(desc(in_shelter)) %>%
+  head(10)
+
+# Getting the average amount of time each dog spends in the shelter
+overall_average <- round(mean(dog_descriptions$days_in_shelter))
+
+# Getting time spent in shelter as a percentage of overall average
+common_breed_summary <- common_breed_summary %>%
+  mutate(compared_to_average = 
+           round(average_time_in_shelter / overall_average * 100, 2))
+
+common_breed_summary
+
+# Visualization (bar graph)
+ggplot(data = common_breed_summary, 
+       aes(x = breed_primary, y = average_time_in_shelter)) +
+  geom_col(fill="cornflowerblue", aes(reorder(breed_primary, in_shelter))) + 
+  geom_hline(yintercept = overall_average) +
+  coord_flip() +
+  ggtitle("Average Time the Ten Most Common Breeds Spend in a Shelter")
+
+
 # 2. How many adoptable dogs were there in each state?
 plot_usmap(data = dog_adoptable, values = "total", color = "red") + 
   scale_fill_continuous(name = "Dogs Adoptable", label = scales::comma) + 
