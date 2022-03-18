@@ -75,7 +75,7 @@ knitr::kable(dog_adoptable_variable_table, col.names = gsub("[.]", " ", names(do
 
 <br>
 
-##### dog_adoptable variables and descriptions
+##### dog_descriptions variables and descriptions
 This data set is a single record per dog.
 ```{r, echo = FALSE}
 knitr::kable(dog_descriptions_variable_table, col.names = gsub("[.]", " ", names(dog_adoptable_variable_table)))
@@ -83,7 +83,7 @@ knitr::kable(dog_descriptions_variable_table, col.names = gsub("[.]", " ", names
 
 <br>
 
-##### dog_adoptable variables and descriptions
+##### dog_destination variables and descriptions
 This data set is a single record per transfer (of dogs between destinations).
 ```{r, echo = FALSE}
 knitr::kable(dog_destination_variable_table, col.names = gsub("[.]", " ", names(dog_adoptable_variable_table)))
@@ -191,7 +191,7 @@ dog_descriptions <- select(dog_descriptions, !contact_country)
 
 <br>
 
-##### dog_destination (continued)
+##### dog_descriptions (continued)
 ```{r, warning = FALSE, message = FALSE, results = FALSE}
 dog_descriptions <- mutate(dog_descriptions, posted_date = as.Date(posted))
 dog_descriptions <- mutate(dog_descriptions, accessed_date = as.Date(accessed, "%d/%m/%Y"))
@@ -228,7 +228,7 @@ In this section we renamed, and mutated some variables.
 
 <br>
 
-##### dog_destination (continued)
+##### dog_descriptions (continued)
 ```{r, warning = FALSE, message = FALSE, results = FALSE}
 # breed_secondary
 dog_descriptions$breed_secondary[is.na(dog_descriptions$breed_secondary)] <- "NONE / UNKNOWN"
