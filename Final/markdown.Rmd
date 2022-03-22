@@ -29,7 +29,8 @@ library("dplyr")    # For data/dataframe manipulation
 library("usmap")    # US map plots
 library("ggplot2")  # Data visualization
 library("prettydoc")# document themes for R Markdown
-library("DT")       # used for displaying R data objects (matrices or data frames) as tables on HTML pages
+library("DT")       # used for displaying R data objects (matrices or data frames) 
+                    # as tables on HTML pages
 
 ```
 
@@ -424,7 +425,8 @@ ggplot(data = head(common_breed_summary,10),
   geom_col(fill="cornflowerblue", aes(reorder(breed_primary, in_shelter))) + 
   geom_hline(yintercept = overall_average) +
   coord_flip() +
-  ggtitle("Average Time the Ten Most Common Breeds Spend in a Shelter")
+  ggtitle("Average Time the Ten Most Common Breeds Spend in a Shelter") +
+  labs(x = "Breed", y = "Average Time in Shelter")
 ```
 
 <br>
